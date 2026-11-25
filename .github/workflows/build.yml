@@ -1,5 +1,5 @@
-name: Compile Unsigned IPA
-on: workflow_dispatch # Adds a manual trigger button
+name: Build SatellaJailed Dylib
+on: workflow_dispatch
 
 jobs:
   build:
@@ -8,19 +8,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build Archive
+      - name: Install Theos Compilation Environment
         run: |
-          xcodebuild -workspace *.xcworkspace -scheme "YourAppName" -archivePath $RUNNER_TEMP/App.xcarchive -sdk iphoneos -configuration Release clean archive || \
-          xcodebuild -project *.xcodeproj -scheme "YourAppName" -archivePath $RUNNER_TEMP/App.xcarchive -sdk iphoneos -configuration Release clean archive
+          bash -c "$(curl -fsSL https://githubusercontent.com)"
+          echo "THEOS=~/theos" >> $GITHUB_ENV
 
-      - name: Package Payload
+      - name: Build Tweak
         run: |
-          mkdir -p Payload
-          cp -r $RUNNER_TEMP/App.xcarchive/Products/Applications/*.app Payload/
-          zip -r App.ipa Payload
-
-      - name: Upload Artifact
+          export THEOS=~/theos
+          cd Tweak
+          make package FINALPACKAGE=1
+          
+      - name: Upload Compiled File
         uses: actions/upload-artifact@v4
         with:
-          name: compiled-ipa
-          path: App.ipa
+          name: SatellaJailed-Compiled
+          path: Tweak/.theos/obj/debug/*.dylib
