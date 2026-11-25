@@ -1,0 +1,26 @@
+name: Compile Unsigned IPA
+on: workflow_dispatch # Adds a manual trigger button
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Archive
+        run: |
+          xcodebuild -workspace *.xcworkspace -scheme "YourAppName" -archivePath $RUNNER_TEMP/App.xcarchive -sdk iphoneos -configuration Release clean archive || \
+          xcodebuild -project *.xcodeproj -scheme "YourAppName" -archivePath $RUNNER_TEMP/App.xcarchive -sdk iphoneos -configuration Release clean archive
+
+      - name: Package Payload
+        run: |
+          mkdir -p Payload
+          cp -r $RUNNER_TEMP/App.xcarchive/Products/Applications/*.app Payload/
+          zip -r App.ipa Payload
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-ipa
+          path: App.ipa
